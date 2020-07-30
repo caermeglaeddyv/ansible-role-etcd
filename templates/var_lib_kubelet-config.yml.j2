@@ -1,0 +1,19 @@
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+address: {{ ansible_default_ipv4.address }}
+cgroupDriver: systemd
+staticPodPath: /etc/kubernetes/manifests
+authentication:
+  anonymous:
+    enabled: false
+  webhook:
+    enabled: false
+  x509:
+    clientCAFile: /etc/kubernetes/pki/etcd/ca.crt
+authorization:
+  mode: AlwaysAllow
+tlsMinVersion: {{ etcd_tls_min_version }}
+tlsCipherSuites:
+{% for tcs in etcd_tls_cipher_suites -%}
+- {{ tcs }}
+{% endfor %}

@@ -1,0 +1,46 @@
+---
+# defaults file for etcd
+
+
+# Name of separate device in /dev/disk/by-path/ for etcd storage:
+etcd_disk_path: ""          # pci-0000:13:00.0-scsi-0:0:0:0
+
+# Defines the way to deploy etcd, currently the only supported option is
+# with kubeadm, which creates certificates and runs cluster inside containers:
+etcd_deployment_type: with_kubeadm
+
+# Variable which is common for most projects, used in
+# configuration files or file/directory names.
+# By default used as reference for etcd_project_dir variable.
+# Currently used as prefix for etcd initial cluster token:
+etcd_project_name: test
+
+# Variable which is common for most projects, used as
+# project working directory on the localhost for the role.
+# Currently is used for fetching etcd certificates
+# to localhost and copying them among other cluster members:
+etcd_project_dir: files/{{ etcd_project_name }}
+
+# SANs which will be added to etcd server certificate:
+etcd_server_cert_sans: []
+
+# Initial cluster state for etcd cluster:
+etcd_initial_cluster_state: new
+
+# Initial cluster token to make sure etcd will contact
+# members of it's cluster only in the network:
+etcd_initial_cluster_token: "{{ etcd_project_name }}-etcd"
+
+# Minimum version of TLS used:
+etcd_tls_min_version: VersionTLS12
+
+# Cipher suites used with TLS:
+etcd_tls_cipher_suites:
+- TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+- TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+- TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+- TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+- TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+- TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+- TLS_RSA_WITH_AES_128_GCM_SHA256
+- TLS_RSA_WITH_AES_256_GCM_SHA384

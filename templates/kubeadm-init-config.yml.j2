@@ -1,0 +1,29 @@
+apiVersion: kubeadm.k8s.io/v1beta2
+kind: ClusterConfiguration
+kubernetesVersion: {{ etcd_k8s_version }}
+etcd:
+  local:
+    serverCertSANs:
+    {% if etcd_server_cert_sans -%}
+    {% for scs in etcd_server_cert_sans -%}
+    - {{ scs }}
+    {% endfor -%}
+    {% else -%}
+    {% for server in ansible_play_batch -%}
+    - {{ server }}
+    - {{ hostvars[server].ansible_default_ipv4.address }}
+    {% endfor -%}
+    {% endif -%}
+    peerCertSANs:
+    - {{ inventory_hostname_short }}
+    extraArgs:
+      name: {{ inventory_hostname_short }}
+      initial-cluster: {% for server in ansible_play_batch %}{{ server }}=https://{{ hostvars[server].ansible_default_ipv4.address }}:2380{{ "," if not loop.last }}{% endfor %}
+
+      initial-cluster-state: {{ etcd_initial_cluster_state }}
+      initial-cluster-token: {{ etcd_initial_cluster_token }}
+      listen-client-urls: https://{{ ansible_default_ipv4.address }}:2379
+      advertise-client-urls: https://{{ ansible_default_ipv4.address }}:2379
+      listen-peer-urls: https://{{ ansible_default_ipv4.address }}:2380
+      initial-advertise-peer-urls: https://{{ ansible_default_ipv4.address }}:2380
+      cipher-suites: {% for tcs in etcd_tls_cipher_suites %}{{ tcs }}{{ "," if not loop.last }}{% endfor %}

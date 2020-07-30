@@ -1,0 +1,106 @@
+---
+- name: include vars specific to kubeadm deployment type
+  include_vars: "{{ etcd_deployment_type }}.yml"
+
+- name: create etcd-ca and apiserver-etcd-client keypairs
+  command: /bin/kubeadm init phase certs {{ item }}
+  delegate_to: "{{ play_hosts | first }}"
+  run_once: true
+  with_items:
+  - etcd-ca
+  - apiserver-etcd-client
+  tags:
+  - never
+
+- name: fetch etcd-ca and apiserver-etcd-client keypairs
+  fetch:
+    src: /etc/kubernetes/pki/{{ item }}
+    dest: "{{ etcd_project_dir }}/etcd/pki/{{ item }}"
+    flat: yes
+  delegate_to: "{{ play_hosts | first }}"
+  run_once: true
+  with_items:
+  - etcd/ca.crt
+  - etcd/ca.key
+  - apiserver-etcd-client.crt
+  - apiserver-etcd-client.key
+
+- name: copy kubeadm config
+  template:
+    src: kubeadm-init-config.yml.j2
+    dest: $HOME/kubeadm-config.yml
+
+- name: create etcd and kubelet directories
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+  - /var/lib/kubelet
+  - /etc/kubernetes/pki/etcd
+  - /etc/systemd/system/kubelet.service.d
+
+- name: copy kubelet config
+  template:
+    src: var_lib_kubelet-config.yml.j2
+    dest: /var/lib/kubelet/config.yaml
+
+- name: configure kubelet for etcd
+  copy:
+    src: etc_systemd_system_kubelet.service.d_20-etcd-service-manager.conf
+    dest: /etc/systemd/system/kubelet.service.d/20-etcd-service-manager.conf
+
+- name: copy etcd-ca and apiserver-etcd-client keypairs
+  copy:
+    src: "{{ etcd_project_dir }}/etcd/pki/{{ item }}"
+    dest: /etc/kubernetes/pki/{{ item }}
+  with_items:
+  - etcd/ca.crt
+  - etcd/ca.key
+  - apiserver-etcd-client.crt
+  - apiserver-etcd-client.key
+
+- name: create etcd-server certs
+  command: /bin/kubeadm init phase certs etcd-server --config=$HOME/kubeadm-config.yml
+  tags:
+  - never
+
+- name: create etcd-peer certs
+  command: /bin/kubeadm init phase certs etcd-peer --config=$HOME/kubeadm-config.yml
+  tags:
+  - never
+
+- name: create etcd-healthcheck-client certs
+  command: /bin/kubeadm init phase certs etcd-healthcheck-client --config=$HOME/kubeadm-config.yml
+  tags:
+  - never
+
+- name: delete etcd ca.key from remote
+  file:
+    path: /etc/kubernetes/pki/etcd/ca.key
+    state: absent
+  tags:
+  - never
+
+- name: restart docker and kubelet
+  systemd:
+    daemon_reload: yes
+    name: "{{ item }}"
+    state: restarted
+  with_items:
+  - docker
+  - kubelet
+
+- name: create manifest and start etcd cluster
+  command: /bin/kubeadm init phase etcd local --config=$HOME/kubeadm-config.yml
+
+- name: wait for cluster startup
+  pause:
+    prompt: "Waiting until etcd cluster is bootstrapped..."
+    minutes: "3"
+
+- name: check etcd cluster health
+  shell: |
+    /bin/docker run --rm --net host -v /etc/kubernetes:/etc/kubernetes quay.io/coreos/etcd:v3.3.10 \
+    etcdctl --cert-file /etc/kubernetes/pki/etcd/peer.crt --key-file /etc/kubernetes/pki/etcd/peer.key \
+    --ca-file /etc/kubernetes/pki/etcd/ca.crt --endpoints https://$(/bin/hostname):2379 cluster-health \
+    > ./etcd-cluster-healthcheck_$(date +%F_%T).log

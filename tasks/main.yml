@@ -1,0 +1,55 @@
+---
+# tasks file for etcd
+- name: disable selinux
+  selinux:
+    state: disabled
+
+- name: reboot all machines
+  reboot:
+    msg: "Rebooting machines after disabling SELinux..."
+  tags:
+  - never
+
+- name: create physical volume and volume group for etcd
+  lvg:
+    vg: etcd
+    pvs:
+    - /dev/disk/by-path/{{ etcd_disk_path }}
+  when: etcd_disk_path is defined
+
+- name: create logical volume for etcd
+  lvol:
+    vg: etcd
+    lv: etcd
+    size: 100%FREE
+  when: etcd_disk_path is defined
+
+- name: format etcd logical volume with xfs filesystem
+  filesystem:
+    dev: /dev/mapper/etcd-etcd
+    fstype: xfs
+  when: etcd_disk_path is defined
+
+- name: create etcd directory
+  file:
+    path: /var/lib/etcd
+    state: directory
+
+- name: mount etcd logical volume
+  mount:
+    path: /var/lib/etcd
+    src: /dev/mapper/etcd-etcd
+    fstype: xfs
+    state: mounted
+  when: etcd_disk_path is defined
+
+- name: open firewall ports
+  firewalld:
+    immediate: yes
+    permanent: yes
+    port: "{{ item }}/tcp"
+    state: enabled
+  with_items:
+  - 2379-2380
+
+- import_tasks: "{{ etcd_deployment_type }}.yml"

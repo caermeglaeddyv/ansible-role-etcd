@@ -1,0 +1,7 @@
+---
+# vars file for etcd
+
+
+# Versions of kubeadm and kubelet used in role, usueally this must satisfy
+# the version of kubernetes cluster, which will connect to etcd cluster:
+etcd_k8s_version: 1.14.10
