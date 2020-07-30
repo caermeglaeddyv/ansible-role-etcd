@@ -1,4 +1,4 @@
-Etcd
+Ansible role: Etcd
 =========
 
 This role is used to install etcd cluster.
