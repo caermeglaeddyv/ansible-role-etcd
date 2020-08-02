@@ -73,6 +73,9 @@ etcd_tls_cipher_suites:
 - TLS_RSA_WITH_AES_128_GCM_SHA256
 - TLS_RSA_WITH_AES_256_GCM_SHA384
 
+# Time in minutes to wait for cluster to start up before health check:
+etcd_wait_before_healthcheck: 3
+
 ```
 
 Variables and their descriptions copied from vars/with_kubeadm.yml

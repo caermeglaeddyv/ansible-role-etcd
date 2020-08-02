@@ -96,7 +96,7 @@
 - name: wait for cluster startup
   pause:
     prompt: "Waiting until etcd cluster is bootstrapped..."
-    minutes: "3"
+    minutes: "{{ etcd_wait_before_healthcheck }}"
 
 - name: check etcd cluster health
   shell: |
