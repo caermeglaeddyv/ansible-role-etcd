@@ -15,20 +15,20 @@
     vg: etcd
     pvs:
     - /dev/disk/by-path/{{ etcd_disk_path }}
-  when: etcd_disk_path is defined
+  when: etcd_disk_path
 
 - name: create logical volume for etcd
   lvol:
     vg: etcd
     lv: etcd
     size: 100%FREE
-  when: etcd_disk_path is defined
+  when: etcd_disk_path
 
 - name: format etcd logical volume with xfs filesystem
   filesystem:
     dev: /dev/mapper/etcd-etcd
     fstype: xfs
-  when: etcd_disk_path is defined
+  when: etcd_disk_path
 
 - name: create etcd directory
   file:
@@ -41,7 +41,7 @@
     src: /dev/mapper/etcd-etcd
     fstype: xfs
     state: mounted
-  when: etcd_disk_path is defined
+  when: etcd_disk_path
 
 - name: open firewall ports
   firewalld:

@@ -23,6 +23,8 @@ etcd_project_dir: files/{{ etcd_project_name }}
 
 # SANs which will be added to etcd server certificate:
 etcd_server_cert_sans: []
+# - abc.xyz
+# - 1.2.3.4
 
 # Initial cluster state for etcd cluster:
 etcd_initial_cluster_state: new
