@@ -37,7 +37,7 @@ etcd_disk_path: ""          # pci-0000:13:00.0-scsi-0:0:0:0
 # with kubeadm, which creates certificates and runs cluster inside containers:
 etcd_deployment_type: with_kubeadm
 
-# Variable which is common for most projects, used in 
+# Variable which is common for most projects, used in
 # configuration files or file/directory names.
 # By default used as reference for etcd_project_dir variable.
 # Currently used as prefix for etcd initial cluster token:
@@ -49,8 +49,14 @@ etcd_project_name: test
 # to localhost and copying them among other cluster members:
 etcd_project_dir: files/{{ etcd_project_name }}
 
+# Versions of kubeadm and kubelet used in role, usueally this must satisfy
+# the version of kubernetes cluster, which will connect to etcd cluster:
+etcd_k8s_version: 1.14.10
+
 # SANs which will be added to etcd server certificate:
 etcd_server_cert_sans: []
+# - abc.xyz
+# - 1.2.3.4
 
 # Initial cluster state for etcd cluster:
 etcd_initial_cluster_state: new
@@ -78,15 +84,6 @@ etcd_wait_before_healthcheck: 3
 
 ```
 
-Variables and their descriptions copied from vars/with_kubeadm.yml
-
-```bash
-
-# Versions of kubeadm and kubelet used in role, usueally this must satisfy
-# the version of kubernetes cluster, which will connect to etcd cluster:
-etcd_k8s_version: 1.14.10
-
-```
 
 Dependencies
 ------------

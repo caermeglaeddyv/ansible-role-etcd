@@ -21,6 +21,10 @@ etcd_project_name: test
 # to localhost and copying them among other cluster members:
 etcd_project_dir: files/{{ etcd_project_name }}
 
+# Versions of kubeadm and kubelet used in role, usueally this must satisfy
+# the version of kubernetes cluster, which will connect to etcd cluster:
+etcd_k8s_version: 1.14.10
+
 # SANs which will be added to etcd server certificate:
 etcd_server_cert_sans: []
 # - abc.xyz
