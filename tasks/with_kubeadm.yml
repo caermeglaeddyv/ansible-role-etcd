@@ -1,7 +1,4 @@
 ---
-- name: include vars specific to kubeadm deployment type
-  include_vars: "{{ etcd_deployment_type }}.yml"
-
 - name: create etcd-ca and apiserver-etcd-client keypairs
   command: /bin/kubeadm init phase certs {{ item }}
   delegate_to: "{{ play_hosts | first }}"
