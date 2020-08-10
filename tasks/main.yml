@@ -24,13 +24,13 @@
     vg: etcd
     lv: etcd
     size: 100%FREE
-  when: etcd_disk_path is defined
+  when: etcd_disk_path | length
 
 - name: format etcd logical volume with xfs filesystem
   filesystem:
     dev: /dev/mapper/etcd-etcd
     fstype: xfs
-  when: etcd_disk_path is defined
+  when: etcd_disk_path | length
 
 - name: create etcd directory
   file:
@@ -43,7 +43,7 @@
     src: /dev/mapper/etcd-etcd
     fstype: xfs
     state: mounted
-  when: etcd_disk_path is defined
+  when: etcd_disk_path | length
 
 - name: open firewall ports
   firewalld:
