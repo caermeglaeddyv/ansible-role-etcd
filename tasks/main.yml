@@ -17,7 +17,7 @@
     vg: etcd
     pvs:
     - /dev/disk/by-path/{{ etcd_disk_path }}
-  when: not etcd_disk_path
+  when: etcd_disk_path | length
 
 - name: create logical volume for etcd
   lvol:
