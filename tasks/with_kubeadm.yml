@@ -1,7 +1,7 @@
 ---
 - name: create etcd-ca and apiserver-etcd-client keypairs
   command: /bin/kubeadm init phase certs {{ item }}
-  delegate_to: "{{ play_hosts | first }}"
+  delegate_to: "{{ ansible_play_batch | first }}"
   run_once: true
   with_items:
   - etcd-ca
@@ -14,7 +14,7 @@
     src: /etc/kubernetes/pki/{{ item }}
     dest: "{{ etcd_project_dir }}/etcd/pki/{{ item }}"
     flat: yes
-  delegate_to: "{{ play_hosts | first }}"
+  delegate_to: "{{ ansible_play_batch | first }}"
   run_once: true
   with_items:
   - etcd/ca.crt
