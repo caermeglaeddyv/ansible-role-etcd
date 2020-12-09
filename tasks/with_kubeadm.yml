@@ -101,3 +101,12 @@
     etcdctl --cert-file /etc/kubernetes/pki/etcd/peer.crt --key-file /etc/kubernetes/pki/etcd/peer.key \
     --ca-file /etc/kubernetes/pki/etcd/ca.crt --endpoints https://$(/bin/hostname):2379 cluster-health \
     > ./etcd-cluster-healthcheck_$(date +%F_%T).log
+  when: kubernetes_version is version("1.14", "==") | kubernetes_version is version("1.15", "==")
+
+- name: check etcd cluster health
+  shell: |
+    /bin/docker run --rm --net host -v /etc/kubernetes:/etc/kubernetes k8s.gcr.io/etcd:3.4.3-0 \
+    etcdctl --cert /etc/kubernetes/pki/etcd/peer.crt --key /etc/kubernetes/pki/etcd/peer.key \
+    --cacert /etc/kubernetes/pki/etcd/ca.crt --endpoints https://$(/bin/hostname):2379 endpoint health --cluster \
+    > ./etcd-cluster-healthcheck_$(date +%F_%T).log
+  when: kubernetes_version is version("1.17", "==")
