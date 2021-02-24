@@ -95,21 +95,69 @@
     prompt: "Waiting until etcd cluster is bootstrapped..."
     minutes: "{{ etcd_wait_before_healthcheck }}"
 
+- name: install epel
+  yum:
+    name:
+    - epel-release
+    state: present
+    allow_downgrade: yes
+
+- name: install pip
+  yum:
+    name: python-pip
+    state: present
+
+- name: install docker-py
+  pip:
+    name: docker-py
+    state: present
+
 - name: check etcd cluster health
-  shell: |
-    /bin/docker run --rm --net host -v /etc/kubernetes:/etc/kubernetes quay.io/coreos/etcd:v3.3.10 \
-    etcdctl --cert-file /etc/kubernetes/pki/etcd/peer.crt --key-file /etc/kubernetes/pki/etcd/peer.key \
-    --ca-file /etc/kubernetes/pki/etcd/ca.crt --endpoints https://$(/bin/hostname):2379 cluster-health
+  docker_container:
+    name: etcd-health-check
+    state: started
+    image: quay.io/coreos/etcd:v3.3.10
+    network_mode: host
+    command: "etcdctl --cert-file /etc/kubernetes/pki/etcd/peer.crt --key-file /etc/kubernetes/pki/etcd/peer.key --ca-file /etc/kubernetes/pki/etcd/ca.crt --endpoints https://{{ ansible_default_ipv4.address }}:2379 cluster-health"
+    detach: no
+    interactive: yes
+    tty: yes
+    recreate: yes
+    cleanup: yes
+    volumes:
+    - /etc/kubernetes:/etc/kubernetes
   register: ps
   when: etcd_k8s_version is version("1.14", ">=") and etcd_k8s_version is version("1.16", "<=")
 
 - name: check etcd cluster health
-  shell: |
-    /bin/nohup /bin/docker run --rm --net host -v /etc/kubernetes:/etc/kubernetes k8s.gcr.io/etcd:3.4.3-0 \
-    etcdctl --cert /etc/kubernetes/pki/etcd/peer.crt --key /etc/kubernetes/pki/etcd/peer.key \
-    --cacert /etc/kubernetes/pki/etcd/ca.crt --endpoints https://$(/bin/hostname):2379 endpoint health --cluster
+  docker_container:
+    name: etcd-health-check
+    state: started
+    image: k8s.gcr.io/etcd:3.4.3-0
+    network_mode: host
+    command: "etcdctl --cert /etc/kubernetes/pki/etcd/peer.crt --key /etc/kubernetes/pki/etcd/peer.key --cacert /etc/kubernetes/pki/etcd/ca.crt --endpoints https://{{ ansible_default_ipv4.address }}:2379 endpoint health --cluster"
+    detach: no
+    interactive: yes
+    tty: yes
+    recreate: yes
+    cleanup: yes
+    volumes:
+    - /etc/kubernetes:/etc/kubernetes
   register: ps
-  when: if etcd_k8s_version is version("1.17", ">=") and etcd_k8s_version is version("1.18", "<=")
+  when: etcd_k8s_version is version("1.17", ">=") and etcd_k8s_version is version("1.18", "<=")
 
 - debug:
-    var: ps.stdout
+    msg: "{{ ps.ansible_facts.docker_container.Output }}"
+
+- name: uninstall docker-py
+  pip:
+    name: docker-py
+    state: absent
+
+- name: uninstall epel and pip
+  yum:
+    name:
+    - pip
+    - epel-release
+    state: absent
+    autoremove: yes
